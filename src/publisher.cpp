@@ -10,9 +10,9 @@ int main(int argc, char ** argv) {
 
     ros::NodeHandle nh;
 
-    rosutil::PublisherHandle publisherHandle(nh, "chatter", 100);
+    rosutil::PublisherHandle<std_msgs::String> publisherHandle(nh, "chatter", 100);
 
-    ros::Rate loop_rate(1):
+    ros::Rate loopRate(1);
 
     int count = 0;
     while (ros::ok()) {
@@ -28,7 +28,7 @@ int main(int argc, char ** argv) {
 
         ros::spinOnce();
 
-        loop_date.sleep();
+        loopRate.sleep();
         ++count;
     }
 

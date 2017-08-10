@@ -9,6 +9,15 @@
 
 namespace rosutil {
 
+bool alwaysTrueComparator(T const &, T const &) {
+    return true;
+}
+
+template <class T>
+bool alwaysTruePredicate(T const &) {
+    return true;
+}
+
 template <class T>
 class PublisherHandle {
 
@@ -18,10 +27,11 @@ public:
     typedef bool (*Predicate)(message_t const &);
 
     PublisherHandle(ros::NodeHandle & nh, std::string const & topicName, unsigned const & bufferSize)
-            : PublisherHandle(nh, topicName, bufferSize, alwaysTrueComparator_, alwaysTruePredicate_) {
+            : nh_(nh), topicName_(topicName), bufferSize_(bufferSize), comparator_(alwaysTrueComparator<message_t>), predicate_(alwaysTruePredicate<message_t>) {
+        publisher_ = nh_.advertise<message_t>(topicName_.c_str(), bufferSize_);
     }
 
-    PublisherHandle(ros::NodeHandle & nh, std::string const & topicName, unsigned const & bufferSize,
+    /*PublisherHandle(ros::NodeHandle & nh, std::string const & topicName, unsigned const & bufferSize,
                     Comparator const & comparator)
             : PublisherHandle(nh, topicName, bufferSize, comparator, alwaysTruePredicate_) {
     }
@@ -35,7 +45,7 @@ public:
                     Comparator const & comparator, Predicate const & predicate)
             : nh_(nh), topicName_(topicName), bufferSize_(bufferSize), comparator_(comparator), predicate_(predicate) {
         publisher_ = nh_.advertise<message_t>(topicName_.c_str(), bufferSize_);
-    }
+    }*/
 
     PublisherHandle(PublisherHandle&&) = delete;
 
@@ -45,7 +55,7 @@ public:
 
     bool publish(message_t const & message) {
         if (predicate_(message)) {
-            if (comparator_(last, message)) {
+            if (comparator_(lastMessage_, message)) {
                 publisher_.publish(message);
                 lastMessage_ = message;
                 return true;
@@ -63,20 +73,10 @@ private:
     Predicate predicate_;
 
     ros::NodeHandle& nh_;
-    std::string topic_;
+    std::string topicName_;
     unsigned bufferSize_;
     ros::Publisher publisher_;
     message_t lastMessage_;
-
-    template <class T>
-    bool alwaysTruePredicate_(T const &) {
-        return true;
-    }
-
-    template <class T>
-    bool alwaysTrueComparator_(T const &, T const &) {
-        return true;
-    }
 
 };
 
