@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 
-#include "rosutil/PublisherHandle.hpp"
+#include "rosutil/rosutil.hpp"
 
 #include <sstream>
 
