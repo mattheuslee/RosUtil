@@ -20,6 +20,6 @@ bool alwaysTruePredicate(T const &) {
 } // rosutil
 
 #include "rosutil/PublisherHandle.hpp"
-//#include "rosutil/SubscriberHandle.hpp"
+#include "rosutil/SubscriberHandle.hpp"
 
 #endif // ROSUTIL_HPP_

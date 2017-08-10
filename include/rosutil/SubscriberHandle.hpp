@@ -5,6 +5,7 @@
 
 #include "ros/ros.h"
 
+#include <queue>
 #include <string>
 
 namespace rosutil {
@@ -18,22 +19,22 @@ public:
     typedef bool (*Predicate)(message_t const &);
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize)
-            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator_, alwaysTruePredicate_, 1 ) {
+            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator<message_t>, alwaysTruePredicate<message_t>, 1 ) {
     }
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize,
                      Comparator const & comparator)
-            : SubscriberHandle(nh, topicName, bufferSize, comparator, alwaysTruePredicate_, 1) {
+            : SubscriberHandle(nh, topicName, bufferSize, comparator, alwaysTruePredicate<message_t>, 1) {
     }
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize,
                      Predicate const & predicate)
-            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator_, predicate, 1) {
+            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator<message_t>, predicate, 1) {
     }
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize,
                      unsigned const & queueLength)
-            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator_, alwaysTruePredicate_, queueLength) {
+            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator<message_t>, alwaysTruePredicate<message_t>, queueLength) {
     }
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize,
@@ -43,17 +44,17 @@ public:
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize,
                      Predicate const & predicate, unsigned const & queueLength)
-            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator_, predicate, queueLength) {
+            : SubscriberHandle(nh, topicName, bufferSize, alwaysTrueComparator<message_t>, predicate, queueLength) {
     }
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize,
                      Comparator const & comparator, unsigned const & queueLength)
-            : SubscriberHandle(nh, topicName, bufferSize, comparator, alwaysTruePredicate_, queueLength) {
+            : SubscriberHandle(nh, topicName, bufferSize, comparator, alwaysTruePredicate<message_t>, queueLength) {
     }
 
     SubscriberHandle(ros::NodeHandle& nh, std::string const & topicName, unsigned const & bufferSize,
                      Comparator const & comparator, Predicate const & predicate, unsigned const & queueLength)
-            : nh_(nh), topicName_(topicName), bufferSize_(bufferSize), comparator_(comparator), predicate_(predicate), queueLength_(queueLength)) {
+            : nh_(nh), topicName_(topicName), bufferSize_(bufferSize), comparator_(comparator), predicate_(predicate), queueLength_(queueLength) {
         subscriber_ = nh_.subscribe(topicName.c_str(), bufferSize_, &SubscriberHandle::callback_, this);
     }
 
@@ -80,8 +81,11 @@ public:
     }
 
 private:
+    Comparator comparator_;
+    Predicate predicate_;
+
     ros::NodeHandle& nh_;
-    std::string topic_;
+    std::string topicName_;
     unsigned bufferSize_;
     ros::Subscriber subscriber_;
     message_t lastMessage_;
@@ -89,8 +93,8 @@ private:
     unsigned queueLength_;
     std::queue<message_t> messageQueue_;
 
-    void callback_(message_t* msgPtr) {
-        message_t& message = *msgPtr;
+    void callback_(typename message_t::ConstPtr const & msgPtr) {
+        const message_t& message = *msgPtr;
         if (predicate_(message)) {
             if (comparator_(lastMessage_, message)) {
                 isUpdated_ = true;
@@ -101,16 +105,6 @@ private:
                 }
             }
         }
-    }
-
-    template <class T>
-    bool alwaysTruePredicate_(T const &) {
-        return true;
-    }
-
-    template <class T>
-    bool alwaysTrueComparator_(T const &, T const &) {
-        return true;
     }
 
 };
